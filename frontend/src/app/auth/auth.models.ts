@@ -12,11 +12,13 @@ export interface RegisterRequest {
 export interface JwtResponse {
   token: string;
   type: string;
+  userId: number;
   username: string;
   email: string;
 }
 
 export interface User {
+  id: number;
   username: string;
   email: string;
   token: string;

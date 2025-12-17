@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { LoginRequest, RegisterRequest, JwtResponse, User } from './auth.models';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -13,8 +14,17 @@ export class AuthService {
 
   constructor(private http: HttpClient) {
     const storedUser = localStorage.getItem('currentUser');
+    let parsedUser: User | null = null;
+    if (storedUser) {
+      try {
+        const candidate = JSON.parse(storedUser);
+        parsedUser = typeof candidate?.id === 'number' ? candidate : null;
+      } catch {
+        parsedUser = null;
+      }
+    }
     this.currentUserSubject = new BehaviorSubject<User | null>(
-      storedUser ? JSON.parse(storedUser) : null
+      parsedUser
     );
     this.currentUser = this.currentUserSubject.asObservable();
   }
@@ -28,12 +38,14 @@ export class AuthService {
       .pipe(
         tap(response => {
           const user: User = {
+            id: response.userId,
             username: response.username,
             email: response.email,
             token: response.token
           };
           localStorage.setItem('currentUser', JSON.stringify(user));
           this.currentUserSubject.next(user);
+          //TODO: Navigate to a specific route after login if needed
         })
       );
   }
