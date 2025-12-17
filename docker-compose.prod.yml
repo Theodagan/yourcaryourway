@@ -33,14 +33,10 @@ services:
       - app-network
 
   backend:
-    image: maven:3.9-eclipse-temurin-21
-    working_dir: /app
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: app-backend
-    command: mvn spring-boot:run
-    volumes:
-      - ./backend/src:/app/src
-      - ./backend/pom.xml:/app/pom.xml
-      - maven-cache:/root/.m2
     ports:
       - "${BACKEND_PORT}:8080"
     environment:
