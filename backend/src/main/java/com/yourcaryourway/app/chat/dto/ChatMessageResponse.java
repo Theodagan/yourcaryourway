@@ -15,9 +15,16 @@ public class ChatMessageResponse {
 
     public ChatMessageResponse() {}
 
-    public ChatMessageResponse(Long id, Long senderId, Long recipientId, String senderUsername,
-                               String recipientUsername, String conversationId, String content,
-                               Instant sentAt) {
+    public ChatMessageResponse(
+        Long id, 
+        Long senderId, 
+        Long recipientId, 
+        String senderUsername,
+        String recipientUsername, 
+        String conversationId,
+        String content,
+        Instant sentAt
+    ) {
         this.id = id;
         this.senderId = senderId;
         this.recipientId = recipientId;

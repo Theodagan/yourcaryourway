@@ -20,8 +20,7 @@ public class ChatController {
     private final ChatMessageService chatMessageService;
     private final SimpMessagingTemplate messagingTemplate;
 
-    public ChatController(ChatMessageService chatMessageService,
-                          SimpMessagingTemplate messagingTemplate) {
+    public ChatController(ChatMessageService chatMessageService, SimpMessagingTemplate messagingTemplate) {
         this.chatMessageService = chatMessageService;
         this.messagingTemplate = messagingTemplate;
     }
@@ -31,31 +30,30 @@ public class ChatController {
         String username = extractUsername(principal);
 
         ChatMessage savedMessage = chatMessageService.logMessage(
-                username,
-                request.getRecipientId(),
-                request.getContent()
+            username,
+            request.getRecipientId(),
+            request.getContent()
         );
 
         ChatMessageResponse response = ChatMessageResponse.fromEntity(savedMessage);
         messagingTemplate.convertAndSendToUser(
-                response.getSenderUsername(),
-                "/queue/messages",
-                response
+            response.getSenderUsername(),
+            "/queue/messages",
+            response
         );
 
         if (!response.getSenderId().equals(response.getRecipientId())) {
             messagingTemplate.convertAndSendToUser(
-                    response.getRecipientUsername(),
-                    "/queue/messages",
-                    response
+                response.getRecipientUsername(),
+                "/queue/messages",
+                response
             );
         }
     }
 
     @MessageMapping("/chat/history")
     @SendToUser("/queue/history")
-    public List<ChatMessageResponse> loadHistory(@Valid @Payload ChatHistoryRequest request,
-                                                 Principal principal) {
+    public List<ChatMessageResponse> loadHistory(@Valid @Payload ChatHistoryRequest request, Principal principal) {
         String username = extractUsername(principal);
 
         List<ChatMessage> history = chatMessageService.getConversationHistory(
