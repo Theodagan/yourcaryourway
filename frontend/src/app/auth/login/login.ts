@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { AuthService } from '../auth-service';
 
 @Component({
@@ -18,8 +18,7 @@ export class LoginComponent {
 
   constructor(
     private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router
+    private authService: AuthService
   ) {
     this.loginForm = this.fb.group({
       username: ['', Validators.required],
@@ -40,7 +39,7 @@ export class LoginComponent {
 
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
-        this.router.navigate(['/']);
+        this.loading = false;
       },
       error: (error) => {
         this.errorMessage = error.error?.message || 'Invalid username or password';
