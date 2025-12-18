@@ -48,7 +48,7 @@ setup-env:
 	fi
 
 create-env-example:
-	@printf '# Database Configuration\nMYSQL_ROOT_PASSWORD=rootpassword\nMYSQL_DATABASE=appdb\nMYSQL_USER=appuser\nMYSQL_PASSWORD=apppassword\nMYSQL_PORT=3306\n\n# Backend Configuration\nBACKEND_PORT=8080\nSPRING_PROFILES_ACTIVE=dev\nSPRING_JPA_HIBERNATE_DDL_AUTO=create\n\n# JWT Configuration\n# Generate a new secret with: openssl rand -base64 64\nJWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970\nJWT_EXPIRATION=86400000\n\n# Frontend Configuration\nFRONTEND_PORT=4200\n\n# Adminer\nADMINER_PORT=8081\n\n# CORS Configuration\nCORS_ALLOWED_ORIGINS=http://localhost:4200' > .env.example
+	@printf '# Database Configuration\nMYSQL_ROOT_PASSWORD=rootpassword\nMYSQL_DATABASE=appdb\nMYSQL_USER=appuser\nMYSQL_PASSWORD=apppassword\nMYSQL_PORT=3306\n\n# Backend Configuration\nBACKEND_PORT=8080\nSPRING_PROFILES_ACTIVE=dev\nSPRING_JPA_HIBERNATE_DDL_AUTO=create\nSPRING_APPLICATION_NAME=$(PACKAGE_NAME)backend\n\n# JWT Configuration\n# Generate a new secret with: openssl rand -base64 64\nJWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970\nJWT_EXPIRATION=86400000\n\n# Frontend Configuration\nFRONTEND_PORT=4200\n\n# Adminer\nADMINER_PORT=8081\n\n# CORS Configuration\nCORS_ALLOWED_ORIGINS=http://localhost:4200' > .env.example
 	@echo ".env.example created"
 
 init: scaffold-backend scaffold-frontend
