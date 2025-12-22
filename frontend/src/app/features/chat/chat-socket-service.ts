@@ -1,230 +1,158 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { signal } from '@angular/core';
 import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
+import { BehaviorSubject } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ChatMessage, ConnectedUser, SendMessagePayload } from './chat.models';
 
-
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class ChatSocketService implements OnDestroy {
-	private client?: Client;
-	private messagesCache = new Map<string, ChatMessage[]>();
+  private client?: Client;
 
-	private conversationMessages = signal<ChatMessage[]>([]);
-	readonly messagesSignal = this.conversationMessages;
+  /* -------------------- Observables (RxJS owns async) -------------------- */
 
-	private connectionState = signal<boolean>(false);
-	readonly connectionSignal = this.connectionState;
+  private messagesSubject = new BehaviorSubject<ChatMessage[]>([]);
+  private connectedUsersSubject = new BehaviorSubject<ConnectedUser[]>([]);
+  private connectionStateSubject = new BehaviorSubject<boolean>(false);
 
-	private messageSubscription?: StompSubscription;
-	private historySubscription?: StompSubscription;
-	private usersSubscription?: StompSubscription;
-	private activeParticipantId?: number;
-	private currentUserId?: number;
+  /* -------------------- Angular's signal (Angular owns render) -------------------- */
 
-	private presenceSubscription?: StompSubscription;
-	private presenceCache: ConnectedUser[] = [];
-	private connectedUsers = signal<ConnectedUser[]>([]); 
-	readonly connectedUsersSignal = this.connectedUsers;
+  readonly messagesSignal = toSignal(this.messagesSubject, { initialValue: [] });
+  readonly connectedUsersSignal = toSignal(this.connectedUsersSubject, { initialValue: [] });
+  readonly connectionSignal = toSignal(this.connectionStateSubject, { initialValue: false });
 
-	connect(token: string, currentUserId: number): void {
-		if (this.client?.active || this.client?.connected) {
-			return;
-		}
+  /* -------------------- MISC -------------------- */
 
-		console.log('Connecting to chat websocket...');
+  private messagesCache = new Map<string, ChatMessage[]>();
+  private activeParticipantId?: number;
+  private currentUserId?: number;
 
-		this.currentUserId = currentUserId;
+  private messageSub?: StompSubscription;
+  private historySub?: StompSubscription;
+  private presenceSub?: StompSubscription;
+  private usersSub?: StompSubscription;
 
-		this.client = new Client({
-			webSocketFactory: () => this.createWebSocket(),
-			reconnectDelay: 5000,
-			connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
-			debug: (e) => {console.log('STOMP: ' + e); }
-		});
+  /* -------------------- CONNECTION -------------------- */
 
-		this.client.onConnect = () => {
-			this.connectionState.set(true);
-			this.subscribeToQueues();
-			// this.subscribeToPresence(); 
-			this.requestPresence();
-			if (this.activeParticipantId !== undefined) {
-				this.requestHistory(this.activeParticipantId);
-			}
-		};
+  connect(token: string, currentUserId: number): void {
+    if (this.client?.active) return;
 
-		this.client.onStompError = (frame) => {
-			console.error('Broker reported ERROR: ' + frame.headers['message'], frame.body);
-		};
+    this.currentUserId = currentUserId;
 
-		this.client.onWebSocketClose = () => {
-			this.connectionState.set(false);
-			this.cleanupSubscriptions();
-			this.client = undefined;
-		};
+    this.client = new Client({
+      webSocketFactory: () => this.createWebSocket(),
+      reconnectDelay: 5000,
+      connectHeaders: { Authorization: `Bearer ${token}` },
+      debug: msg => console.log('STOMP:', msg)
+    });
 
-		this.client.activate();
-	}
+    this.client.onConnect = () => {
+      this.connectionStateSubject.next(true);
+      this.subscribe();
+      this.requestPresence();
+    };
 
-	disconnect(): void {
-		if (!this.client) {
-			return;
-		}
-		this.client.deactivate();
-		this.client = undefined;
-		this.cleanupSubscriptions();
-		this.connectionState.set(false);
-	}
+    this.client.onWebSocketClose = () => {
+      this.connectionStateSubject.next(false);
+      this.cleanup();
+    };
 
-	setActiveParticipant(participantId: number): void {
-		this.activeParticipantId = participantId;
-		if (this.connectionState()) {
-			this.conversationMessages.set([]);
-			this.requestHistory(participantId);
-		}
-	}
+    this.client.activate();
+  }
 
-	sendMessage(payload: SendMessagePayload): void {
-	if (!this.client || !this.client.connected) {
-		throw new Error('Chat connection is not active');
-	}
-	this.client.publish({
-		destination: '/app/chat/send',
-		body: JSON.stringify(payload)
-	});
-	}
+  disconnect(): void {
+    this.client?.deactivate();
+    this.cleanup();
+  }
 
-	private subscribeToQueues(): void {
-		if (!this.client) {
-			return;
-		}
+  /* -------------------- SUBSCRIPTIONS -------------------- */
 
-		this.messageSubscription?.unsubscribe();
-		this.historySubscription?.unsubscribe();
-		this.usersSubscription?.unsubscribe();
-		this.presenceSubscription?.unsubscribe();
+  private subscribe(): void {
+    if (!this.client) return;
 
+    this.messageSub = this.client.subscribe('/user/queue/messages', msg =>
+      this.handleIncomingMessage(JSON.parse(msg.body))
+    );
 
-		this.messageSubscription = this.client.subscribe('/user/queue/messages', (message: IMessage) => {
-			const payload = JSON.parse(message.body) as ChatMessage;
-			this.storeIncomingMessage(payload);
-		});
+    this.historySub = this.client.subscribe('/user/queue/history', msg =>
+      this.handleHistory(JSON.parse(msg.body))
+    );
 
-		this.historySubscription = this.client.subscribe('/user/queue/history', (message: IMessage) => {
-			const payload = JSON.parse(message.body) as ChatMessage[];
-			this.storeHistory(payload);
-		});
+    this.usersSub = this.client.subscribe('/user/queue/connected-users', msg =>
+      this.connectedUsersSubject.next(JSON.parse(msg.body))
+    );
 
-		this.usersSubscription = this.client.subscribe('/user/queue/connected-users', (message: IMessage) => {
-			const users = JSON.parse(message.body) as ConnectedUser[];
-			this.storePresence(users);
-		});
+    this.presenceSub = this.client.subscribe('/topic/presence', msg =>
+      this.connectedUsersSubject.next(JSON.parse(msg.body))
+    );
+  }
 
-		this.presenceSubscription = this.client.subscribe('/topic/presence', (message: IMessage) => {
-			const users = JSON.parse(message.body) as ConnectedUser[];
-			this.storePresence(users);
-		});
-	}
+  /* -------------------- CHAT -------------------- */
 
-	private requestHistory(participantId: number): void {
-		if (!this.client || !this.client.connected) {
-			return;
-		}
-		this.client.publish({
-			destination: '/app/chat/history',
-			body: JSON.stringify({ participantId })
-		});
-	}
+  setActiveParticipant(id: number): void {
+    this.activeParticipantId = id;
+    this.messagesSubject.next([]);
+    this.requestHistory(id);
+  }
 
-	private storeHistory(history: ChatMessage[]): void {
-		if (this.currentUserId === undefined || this.activeParticipantId === undefined) {
-			return;
-		}
+  sendMessage(payload: SendMessagePayload): void {
+    this.client?.publish({
+      destination: '/app/chat/send',
+      body: JSON.stringify(payload)
+    });
+  }
 
-		if (!history.length) {
-			this.conversationMessages.set([]);
-			return;
-		}
+  private requestHistory(participantId: number): void {
+    this.client?.publish({
+      destination: '/app/chat/history',
+      body: JSON.stringify({ participantId })
+    });
+  }
 
-		const conversationId = history[0].conversationId;
-		this.messagesCache.set(conversationId, history);
-		this.pushMessages(conversationId);
-	}
+  private handleHistory(history: ChatMessage[]): void {
+    if (!history.length) {
+      this.messagesSubject.next([]);
+      return;
+    }
 
-	private storeIncomingMessage(message: ChatMessage): void {
-		const cache = this.messagesCache.get(message.conversationId) ?? [];
-		cache.push(message);
-		this.messagesCache.set(message.conversationId, cache);
+    const id = history[0].conversationId;
+    this.messagesCache.set(id, history);
+    this.messagesSubject.next([...history]);
+  }
 
-		const activeConversation = Array.from(this.messagesCache.entries())
-			.find(([, msgs]) =>
-				msgs.some(m =>
-					(m.senderId === this.activeParticipantId || m.recipientId === this.activeParticipantId)
-				)
-			)
-		;
+  private handleIncomingMessage(message: ChatMessage): void {
+    const cache = this.messagesCache.get(message.conversationId) ?? [];
+    cache.push(message);
+    this.messagesCache.set(message.conversationId, cache);
 
-		if (activeConversation?.[0] === message.conversationId) {
-			this.conversationMessages.set([...cache]);
-		}
-	}
+    this.messagesSubject.next([...cache]);
+  }
 
-	private pushMessages(conversationId: string): void {
-		const cached = this.messagesCache.get(conversationId) ?? [];
-		this.conversationMessages.set([...cached]);
-	}
+  /* -------------------- PRESENCE -------------------- */
 
-	private createWebSocket(): WebSocket {
-		const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-		const url = `${protocol}://${window.location.host}/ws-chat`;
-		return new WebSocket(url);
-	}
+  private requestPresence(): void {
+    this.client?.publish({
+      destination: '/app/chat/connected-users',
+      body: ''
+    });
+  }
 
-	private storePresence(users: ConnectedUser[]): void {
-		console.log("storePresence");
-		// cache
-		this.presenceCache = users;
-		this.connectedUsers.set(users);
-	  
-		// push to the “active view”
-		this.pushPresence();
-	}
+  /* -------------------- UTILS -------------------- */
 
-	private requestPresence(): void {
-		if (!this.client || !this.client.connected) {
-		  return;
-		}
-	  
-		this.client.publish({
-		  destination: '/app/chat/connected-users',
-		  body: ''
-		});
-	}
-	  
-	private pushPresence(): void {
-		console.log("pushPresence");
-		// update presence signal
-		this.connectedUsers.set([...this.presenceCache]);
+  private createWebSocket(): WebSocket {
+    const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+    return new WebSocket(`${protocol}://${location.host}/ws-chat`);
+  }
 
-		console.log(this.connectedUsers());
-	}
-	
-	private cleanupSubscriptions(): void {
-		this.messageSubscription?.unsubscribe();
-		this.historySubscription?.unsubscribe();
-		this.usersSubscription?.unsubscribe();
-		this.presenceSubscription?.unsubscribe();
-	  
-		this.messageSubscription = undefined;
-		this.historySubscription = undefined;
-		this.usersSubscription = undefined;
-		this.presenceSubscription = undefined;
-	}
+  private cleanup(): void {
+    this.messageSub?.unsubscribe();
+    this.historySub?.unsubscribe();
+    this.presenceSub?.unsubscribe();
+    this.usersSub?.unsubscribe();
 
+    this.client = undefined;
+  }
 
-	ngOnDestroy(): void {
-		this.disconnect();
-	}
+  ngOnDestroy(): void {
+    this.disconnect();
+  }
 }
