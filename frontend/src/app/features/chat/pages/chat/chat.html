@@ -1,0 +1,66 @@
+@if(currentUser; as user)
+{
+	<section class="chat-shell">
+		<header class="chat-header">
+			<div>
+				<h1>Realtime Chat</h1>
+				<p>Logged in as <strong>{{ currentUser.username }}</strong></p>
+			</div>
+			<div class="status-group">
+				<span class="status-pill" [class.connected]="connectionStatus()">
+					{{ connectionStatus() ? 'Connected' : 'Disconnected' }}
+				</span>
+				<button type="button" class="secondary" (click)="logout()">Logout</button>
+			</div>
+		</header>
+				
+		<form class="participant-form" [formGroup]="conversationForm" (ngSubmit)="startConversation()">
+			<label for="participantId">Participant user ID</label>
+			<div class="participant-controls">
+				<input
+				id="participantId"
+				type="number"
+				placeholder="Enter the ID of the user you want to chat with"
+				formControlName="participantId"
+				/>
+				<button type="submit" [disabled]="conversationForm.invalid">Load conversation</button>
+			</div>
+		</form>
+		
+		@if(activeParticipantId){
+			<div class="chat-body">
+				<div class="messages">
+					@for(message of messages() ; track message.id){
+						<div
+						class="message-bubble"
+						[class.own]="isOwnMessage(message)"
+						>
+							<div class="meta">
+								<span class="author">{{ message.senderUsername }}</span>
+								<span>{{ message.sentAt | date: 'shortTime' }}</span>
+							</div>
+							<p>{{ message.content }}</p>
+						</div>
+					}
+				</div>
+			
+				<form class="message-form" [formGroup]="messageForm" (ngSubmit)="sendMessage()">
+					<textarea
+					rows="3"
+					placeholder="Type your message..."
+					formControlName="content"
+					></textarea>
+					<button type="submit" [disabled]="messageForm.invalid">Send</button>
+				</form>
+			</div>
+		}
+		@else {
+			<div class="empty-state">
+				<p>Select a participant to start chatting in real time.</p>
+			</div>
+		}
+		@if(errorMessage){
+			<p class="error">{{ errorMessage }}</p>
+		}
+	</section>  
+}

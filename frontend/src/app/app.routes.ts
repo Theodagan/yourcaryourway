@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './auth/login/login';
 import { RegisterComponent } from './auth/register/register';
 import { authGuard } from './auth/auth-guard';
-import { ChatComponent } from './features/chat/components/chat.component';
+import { ChatComponent } from './features/chat/pages/chat/chat';
 import { Home } from './features/home/home';
 
 export const routes: Routes = [

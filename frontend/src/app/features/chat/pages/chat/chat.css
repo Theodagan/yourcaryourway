@@ -1,0 +1,159 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.chat-shell {
+  max-width: 960px;
+  margin: 2rem auto;
+  padding: 2rem;
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.status-group {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.status-pill {
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  background: #f87171;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.status-pill.connected {
+  background: #34d399;
+}
+
+button {
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  padding: 0.5rem 1.5rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+button.secondary {
+  background: #1f2937;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.participant-form label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.participant-controls {
+  display: flex;
+  gap: 1rem;
+}
+
+input,
+textarea {
+  flex: 1;
+  border-radius: 0.5rem;
+  border: 1px solid #d1d5db;
+  padding: 0.75rem;
+  font-size: 1rem;
+}
+
+.chat-body {
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 500px;
+  overflow: hidden;
+}
+
+.messages {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.message-bubble {
+  max-width: 65%;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.message-bubble.own {
+  margin-left: auto;
+  background: #2563eb;
+  color: #fff;
+}
+
+.message-bubble .meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  margin-bottom: 0.35rem;
+  opacity: 0.8;
+}
+
+.message-form {
+  border-top: 1px solid #e5e7eb;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: #fff;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  border: 2px dashed #d1d5db;
+  border-radius: 1rem;
+  color: #6b7280;
+}
+
+.error {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .chat-shell {
+    padding: 1rem;
+  }
+
+  .participant-controls {
+    flex-direction: column;
+  }
+
+  .message-bubble {
+    max-width: 100%;
+  }
+}
