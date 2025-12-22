@@ -80,4 +80,5 @@ networks:
 
 volumes:
   mysql-data:
+    name: yourcaryourway_mysql-data
   maven-cache:

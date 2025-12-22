@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -11,11 +11,10 @@ import { AuthService } from '../auth-service';
   templateUrl: './register.html',
   styleUrls: ['./register.css']
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnDestroy {
   registerForm: FormGroup;
   loading = false;
   errorMessage = '';
-  successMessage = '';
 
   constructor(
     private fb: FormBuilder,
@@ -38,22 +37,24 @@ export class RegisterComponent {
       return;
     }
 
+    console.log('🔥 onSubmit called');
+    event?.preventDefault?.();
+
     this.loading = true;
     this.errorMessage = '';
-    this.successMessage = '';
 
     this.authService.register(this.registerForm.value).subscribe({
       next: () => {
-        this.successMessage = 'Registration successful! Redirecting to login...';
-        console.log(this.successMessage);
-        setTimeout(() => {
-          this.router.navigate(['/login']);
-        }, 2000);
+        this.loading = false;
       },
       error: (error) => {
-        this.errorMessage = error.error || 'Registration failed. Please try again.';
+        this.errorMessage = error.error || 'Registration failed';
         this.loading = false;
       }
     });
+  }
+
+  ngOnDestroy() {
+    console.log('💥 RegisterComponent destroyed');
   }
 }

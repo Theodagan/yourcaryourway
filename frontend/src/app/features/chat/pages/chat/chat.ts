@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, signal, Signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, Signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../../auth/auth-service';
@@ -11,15 +11,14 @@ import { ChatMessage } from '../../chat.models';
   selector: 'app-chat',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './chat.html',
-  styleUrls: ['./chat.css']
+  templateUrl: 'chat.html',
+  styleUrls: ['chat.css']
 })
 export class ChatComponent implements OnInit, OnDestroy {
   conversationForm: FormGroup;
   messageForm: FormGroup;
   messages!: Signal<ChatMessage[]>;
   connectionStatus!: Signal<boolean>;
-  // connectionStatus = signal<'connected' | 'disconnected'>('disconnected');
   activeParticipantId?: number;
   currentUser?: User | null;
   errorMessage = '';

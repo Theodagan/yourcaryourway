@@ -13,3 +13,8 @@ export interface SendMessagePayload {
   recipientId: number;
   content: string;
 }
+
+export interface ConnectedUser {
+  username: string;
+  id: number;
+}

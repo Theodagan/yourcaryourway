@@ -5,6 +5,7 @@ import com.yourcaryourway.app.chat.dto.ChatMessageRequest;
 import com.yourcaryourway.app.chat.dto.ChatMessageResponse;
 import com.yourcaryourway.app.chat.model.ChatMessage;
 import com.yourcaryourway.app.chat.service.ChatMessageService;
+import com.yourcaryourway.app.chat.service.ChatPresenceService;
 import jakarta.validation.Valid;
 import java.security.Principal;
 import java.util.List;
@@ -13,16 +14,20 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
+import com.yourcaryourway.app.chat.model.ConnectedUser;
+
 
 @Controller
 public class ChatController {
 
     private final ChatMessageService chatMessageService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ChatPresenceService chatPresenceService;
 
-    public ChatController(ChatMessageService chatMessageService, SimpMessagingTemplate messagingTemplate) {
+    public ChatController(ChatMessageService chatMessageService, SimpMessagingTemplate messagingTemplate, ChatPresenceService chatPresenceService) {
         this.chatMessageService = chatMessageService;
         this.messagingTemplate = messagingTemplate;
+        this.chatPresenceService = chatPresenceService;
     }
 
     @MessageMapping("/chat/send")
@@ -71,5 +76,11 @@ public class ChatController {
             throw new IllegalStateException("Unauthenticated user cannot participate in chat");
         }
         return principal.getName();
+    }
+
+    @MessageMapping("/chat/connected-users")
+    @SendToUser("/queue/connected-users")
+    public List<ConnectedUser> getConnectedUsers(Principal principal) {
+        return chatPresenceService.getConnectedUsers().stream().toList();
     }
 }
