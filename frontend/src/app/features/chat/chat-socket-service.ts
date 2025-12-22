@@ -41,7 +41,7 @@ export class ChatSocketService implements OnDestroy {
       webSocketFactory: () => this.createWebSocket(),
       reconnectDelay: 5000,
       connectHeaders: { Authorization: `Bearer ${token}` },
-      debug: msg => console.log('STOMP:', msg)
+      debug: msg => console.debug('STOMP:', msg)
     });
 
     this.client.onConnect = () => {
@@ -77,13 +77,17 @@ export class ChatSocketService implements OnDestroy {
     );
 
     this.usersSub = this.client.subscribe('/user/queue/connected-users', msg => {
-		console.debug(msg.body);
-		this.connectedUsersSubject.next(JSON.parse(msg.body))
-	});
+      console.log(msg.body);
+      this.connectedUsersSubject.next(JSON.parse(msg.body));
+	  });
 
-    this.presenceSub = this.client.subscribe('/topic/presence', msg =>
-      	this.connectedUsersSubject.next(JSON.parse(msg.body))
-    );
+    this.presenceSub = this.client.subscribe('/topic/presence', msg => {
+      console.log(msg.body, this.currentUserId);
+      let body = JSON.parse(msg.body) as { id: number; username: string }[];
+      let filteredUsers = body.filter(user => user.id !== this.currentUserId);
+      // console.log("test", body.filter(user => user.id !== this.currentUserId));
+      this.connectedUsersSubject.next(filteredUsers);
+    });
   }
 
   /* -------------------- CHAT -------------------- */
