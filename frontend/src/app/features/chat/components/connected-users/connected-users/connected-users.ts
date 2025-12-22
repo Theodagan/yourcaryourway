@@ -1,33 +1,23 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { AuthService } from '../../../../../auth/auth-service';
-import { User } from '../../../../../auth/auth.models';
+import { Component, output } from '@angular/core';
+import { Signal } from '@angular/core';
+import { ConnectedUser } from '../../../chat.models';
 import { ChatSocketService } from '../../../chat-socket-service';
+import { CommonModule } from '@angular/common';
 
 @Component({
-	selector: 'app-connected-users',
-	imports: [],
-	templateUrl: './connected-users.html',
-	styleUrl: './connected-users.css',
+  selector: 'app-connected-users',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './connected-users.html',
+  styleUrl: './connected-users.css',
 })
-export class ConnectedUsers implements OnInit{
-
-    currentUser?: User | null;
+export class ConnectedUsers {
+    users!: Signal<ConnectedUser[]>;
+    recipient = output<number>();
 
     constructor(
-        private router: Router,
-        private authService: AuthService,
-        private chatSocketService: ChatSocketService
-    ) {}
-
-    ngOnInit(): void {
-        this.currentUser = this.authService.currentUserValue;
-        if (!this.currentUser) {
-          this.router.navigate(['/login']);
-          return;
-        }
-    
-        this.chatSocketService.connect(this.currentUser.token, this.currentUser.id);
-        this.chatSocketService.getConnectedUsers();
+        private chatSocket: ChatSocketService,
+    ) {
+        this.users = this.chatSocket.connectedUsersSignal;
     }
 }

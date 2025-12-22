@@ -13,6 +13,10 @@
 				<button type="button" class="secondary" (click)="logout()">Logout</button>
 			</div>
 		</header>
+
+		<app-connected-users
+			(recipient)="handleRecipient($event)"
+		></app-connected-users>
 				
 		<form class="participant-form" [formGroup]="conversationForm" (ngSubmit)="startConversation()">
 			<label for="participantId">Participant user ID</label>

@@ -1,1 +1,6 @@
-<p>connected-users works!</p>
+
+@for(user of users(); track user.id){
+    <button 
+        (click)="recipient.emit(user.id)"
+    >{{user.username}}</button>
+}

@@ -6,11 +6,12 @@ import { AuthService } from '../../../../auth/auth-service';
 import { User } from '../../../../auth/auth.models';
 import { ChatSocketService } from '../../chat-socket-service';
 import { ChatMessage } from '../../chat.models';
+import { ConnectedUsers } from "../../components/connected-users/connected-users/connected-users";
 
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ConnectedUsers],
   templateUrl: 'chat.html',
   styleUrls: ['chat.css']
 })
@@ -107,5 +108,9 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   isOwnMessage(message: ChatMessage): boolean {
     return !!this.currentUser && message.senderId === this.currentUser.id;
+  }
+
+  handleRecipient(recipientId: number){
+    console.log(recipientId);
   }
 }

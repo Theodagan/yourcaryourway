@@ -1,8 +1,9 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { tap } from 'rxjs';
 import { signal } from '@angular/core';
 import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
 import { ChatMessage, ConnectedUser, SendMessagePayload } from './chat.models';
+
+
 
 @Injectable({
   providedIn: 'root'
@@ -17,14 +18,16 @@ export class ChatSocketService implements OnDestroy {
 	private connectionState = signal<boolean>(false);
 	readonly connectionSignal = this.connectionState;
 
-	private connectedUsers = signal<ConnectedUser[]>([]); 
-	readonly connectedUsersSignal = this.connectedUsers;
-
 	private messageSubscription?: StompSubscription;
 	private historySubscription?: StompSubscription;
 	private usersSubscription?: StompSubscription;
 	private activeParticipantId?: number;
 	private currentUserId?: number;
+
+	private presenceSubscription?: StompSubscription;
+	private presenceCache: ConnectedUser[] = [];
+	private connectedUsers = signal<ConnectedUser[]>([]); 
+	readonly connectedUsersSignal = this.connectedUsers;
 
 	connect(token: string, currentUserId: number): void {
 		if (this.client?.active || this.client?.connected) {
@@ -45,7 +48,8 @@ export class ChatSocketService implements OnDestroy {
 		this.client.onConnect = () => {
 			this.connectionState.set(true);
 			this.subscribeToQueues();
-			this.getConnectedUsers();
+			// this.subscribeToPresence(); 
+			this.requestPresence();
 			if (this.activeParticipantId !== undefined) {
 				this.requestHistory(this.activeParticipantId);
 			}
@@ -99,6 +103,9 @@ export class ChatSocketService implements OnDestroy {
 
 		this.messageSubscription?.unsubscribe();
 		this.historySubscription?.unsubscribe();
+		this.usersSubscription?.unsubscribe();
+		this.presenceSubscription?.unsubscribe();
+
 
 		this.messageSubscription = this.client.subscribe('/user/queue/messages', (message: IMessage) => {
 			const payload = JSON.parse(message.body) as ChatMessage;
@@ -108,6 +115,16 @@ export class ChatSocketService implements OnDestroy {
 		this.historySubscription = this.client.subscribe('/user/queue/history', (message: IMessage) => {
 			const payload = JSON.parse(message.body) as ChatMessage[];
 			this.storeHistory(payload);
+		});
+
+		this.usersSubscription = this.client.subscribe('/user/queue/connected-users', (message: IMessage) => {
+			const users = JSON.parse(message.body) as ConnectedUser[];
+			this.storePresence(users);
+		});
+
+		this.presenceSubscription = this.client.subscribe('/topic/presence', (message: IMessage) => {
+			const users = JSON.parse(message.body) as ConnectedUser[];
+			this.storePresence(users);
 		});
 	}
 
@@ -134,28 +151,6 @@ export class ChatSocketService implements OnDestroy {
 		const conversationId = history[0].conversationId;
 		this.messagesCache.set(conversationId, history);
 		this.pushMessages(conversationId);
-	}
-
-	getConnectedUsers(){
-		console.log("test");
-		if (!this.client || !this.client.connected) {
-			return;
-		}
-		
-		console.log("test2");
-
-
-		this.usersSubscription = this.client.subscribe('/user/queue/connected-users', (message: IMessage) => {
-			let users = JSON.parse(message.body) as ConnectedUser[];
-			console.log(users);
-			this.connectedUsers.set(users);
-			console.log(this.connectedUsers());
-		});
-
-		this.client.publish({
-			destination: '/app/chat/connected-users',
-			body: ''
-		  });
 	}
 
 	private storeIncomingMessage(message: ChatMessage): void {
@@ -187,12 +182,47 @@ export class ChatSocketService implements OnDestroy {
 		return new WebSocket(url);
 	}
 
+	private storePresence(users: ConnectedUser[]): void {
+		console.log("storePresence");
+		// cache
+		this.presenceCache = users;
+		this.connectedUsers.set(users);
+	  
+		// push to the “active view”
+		this.pushPresence();
+	}
+
+	private requestPresence(): void {
+		if (!this.client || !this.client.connected) {
+		  return;
+		}
+	  
+		this.client.publish({
+		  destination: '/app/chat/connected-users',
+		  body: ''
+		});
+	}
+	  
+	private pushPresence(): void {
+		console.log("pushPresence");
+		// update presence signal
+		this.connectedUsers.set([...this.presenceCache]);
+
+		console.log(this.connectedUsers());
+	}
+	
 	private cleanupSubscriptions(): void {
 		this.messageSubscription?.unsubscribe();
 		this.historySubscription?.unsubscribe();
+		this.usersSubscription?.unsubscribe();
+		this.presenceSubscription?.unsubscribe();
+	  
 		this.messageSubscription = undefined;
 		this.historySubscription = undefined;
+		this.usersSubscription = undefined;
+		this.presenceSubscription = undefined;
 	}
+
 
 	ngOnDestroy(): void {
 		this.disconnect();
