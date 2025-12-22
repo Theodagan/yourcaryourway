@@ -8,6 +8,7 @@ import com.yourcaryourway.app.chat.service.ChatMessageService;
 import com.yourcaryourway.app.chat.service.ChatPresenceService;
 import jakarta.validation.Valid;
 import java.security.Principal;
+import java.util.Collection;
 import java.util.List;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -16,6 +17,9 @@ import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 import com.yourcaryourway.app.chat.model.ConnectedUser;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 @Controller
 public class ChatController {
@@ -23,6 +27,7 @@ public class ChatController {
     private final ChatMessageService chatMessageService;
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatPresenceService chatPresenceService;
+    private static final Logger log = LoggerFactory.getLogger(ChatController.class);
 
     public ChatController(ChatMessageService chatMessageService, SimpMessagingTemplate messagingTemplate, ChatPresenceService chatPresenceService) {
         this.chatMessageService = chatMessageService;
@@ -81,6 +86,8 @@ public class ChatController {
     @MessageMapping("/chat/connected-users")
     @SendToUser("/queue/connected-users")
     public List<ConnectedUser> getConnectedUsers(Principal principal) {
-        return chatPresenceService.getConnectedUsers().stream().toList();
+        Collection<ConnectedUser> connectedUsers = chatPresenceService.getConnectedUsers();
+
+        return connectedUsers.stream().toList();
     }
 }
