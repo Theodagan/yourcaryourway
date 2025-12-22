@@ -17,19 +17,6 @@
 		<app-connected-users
 			(recipient)="handleRecipient($event)"
 		></app-connected-users>
-				
-		<form class="participant-form" [formGroup]="conversationForm" (ngSubmit)="startConversation()">
-			<label for="participantId">Participant user ID</label>
-			<div class="participant-controls">
-				<input
-				id="participantId"
-				type="number"
-				placeholder="Enter the ID of the user you want to chat with"
-				formControlName="participantId"
-				/>
-				<button type="submit" [disabled]="conversationForm.invalid">Load conversation</button>
-			</div>
-		</form>
 		
 		@if(activeParticipantId){
 			<div class="chat-body">

@@ -23,7 +23,6 @@ export class ChatSocketService implements OnDestroy {
   /* -------------------- MISC -------------------- */
 
   private messagesCache = new Map<string, ChatMessage[]>();
-  private activeParticipantId?: number;
   private currentUserId?: number;
 
   private messageSub?: StompSubscription;
@@ -70,26 +69,26 @@ export class ChatSocketService implements OnDestroy {
     if (!this.client) return;
 
     this.messageSub = this.client.subscribe('/user/queue/messages', msg =>
-      this.handleIncomingMessage(JSON.parse(msg.body))
+      	this.handleIncomingMessage(JSON.parse(msg.body))
     );
 
     this.historySub = this.client.subscribe('/user/queue/history', msg =>
-      this.handleHistory(JSON.parse(msg.body))
+      	this.handleHistory(JSON.parse(msg.body))
     );
 
-    this.usersSub = this.client.subscribe('/user/queue/connected-users', msg =>
-      this.connectedUsersSubject.next(JSON.parse(msg.body))
-    );
+    this.usersSub = this.client.subscribe('/user/queue/connected-users', msg => {
+		console.debug(msg.body);
+		this.connectedUsersSubject.next(JSON.parse(msg.body))
+	});
 
     this.presenceSub = this.client.subscribe('/topic/presence', msg =>
-      this.connectedUsersSubject.next(JSON.parse(msg.body))
+      	this.connectedUsersSubject.next(JSON.parse(msg.body))
     );
   }
 
   /* -------------------- CHAT -------------------- */
 
   setActiveParticipant(id: number): void {
-    this.activeParticipantId = id;
     this.messagesSubject.next([]);
     this.requestHistory(id);
   }

@@ -61,18 +61,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.chatSocketService.disconnect();
   }
 
-  startConversation(): void {
-    this.errorMessage = '';
-    if (this.conversationForm.invalid) {
-      return;
-    }
-
-    const participantId = Number(this.conversationForm.value.participantId);
-    if (Number.isNaN(participantId)) {
-      this.errorMessage = 'Participant id must be a number';
-      return;
-    }
-
+  startConversation(participantId: number): void {
     this.activeParticipantId = participantId;
     this.chatSocketService.setActiveParticipant(participantId);
   }
@@ -112,5 +101,6 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   handleRecipient(recipientId: number){
     console.log(recipientId);
+    this.startConversation(recipientId);
   }
 }

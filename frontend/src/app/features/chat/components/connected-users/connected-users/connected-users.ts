@@ -13,11 +13,17 @@ import { CommonModule } from '@angular/common';
 })
 export class ConnectedUsers {
     users!: Signal<ConnectedUser[]>;
+    currentRecipientId: number = 0;
     recipient = output<number>();
 
     constructor(
         private chatSocket: ChatSocketService,
     ) {
         this.users = this.chatSocket.connectedUsersSignal;
+    }
+
+    select(id:number){
+        this.recipient.emit(id);
+        this.currentRecipientId = id;
     }
 }

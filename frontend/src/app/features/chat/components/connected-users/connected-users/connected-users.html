@@ -1,6 +1,12 @@
 
 @for(user of users(); track user.id){
+    @if(user.id == currentRecipientId){
+
+    }
     <button 
-        (click)="recipient.emit(user.id)"
-    >{{user.username}}</button>
+        (click)="select(user.id)"
+    >
+        <input type="checkbox" name="" id="" [checked]="user.id == currentRecipientId">
+        {{user.username}}
+    </button>
 }
