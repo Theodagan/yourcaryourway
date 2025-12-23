@@ -55,6 +55,10 @@ button {
 button.secondary {
   background: #1f2937;
 }
+button.secondary a {
+  color: white;
+  text-decoration: none;
+}
 
 button:disabled {
   opacity: 0.6;

@@ -23,11 +23,15 @@ export class ConnectedUsers {
     }
 
     select(id:number){
+        console.log("id", id, this.currentRecipientId);
         if(id == this.currentRecipientId){
+            console.log("if");
             this.recipient.emit(0);
             this.currentRecipientId = 0;
+            console.log(this.currentRecipientId);
+        }else{
+            this.recipient.emit(id);
+            this.currentRecipientId = id;
         }
-        this.recipient.emit(id);
-        this.currentRecipientId = id;
     }
 }

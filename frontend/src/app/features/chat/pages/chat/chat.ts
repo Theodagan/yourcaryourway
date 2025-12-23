@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, Signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../../auth/auth-service';
 import { User } from '../../../../auth/auth.models';
 import { ChatSocketService } from '../../chat-socket-service';
@@ -11,7 +11,7 @@ import { ConnectedUsers } from "../../components/connected-users/connected-users
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ConnectedUsers],
+  imports: [CommonModule, ReactiveFormsModule, ConnectedUsers, RouterModule],
   templateUrl: 'chat.html',
   styleUrls: ['chat.css']
 })

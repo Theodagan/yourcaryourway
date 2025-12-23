@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
-import { ConnectedUsers } from "../chat/components/connected-users/connected-users/connected-users";
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-home',
-  imports: [ConnectedUsers],
+  imports: [ RouterModule],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })

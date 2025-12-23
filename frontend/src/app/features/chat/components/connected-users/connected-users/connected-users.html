@@ -6,7 +6,7 @@
     <button 
         (click)="select(user.id)"
     >
-        <input type="checkbox" name="" id="" [checked]="user.id == currentRecipientId">
+        <input type="radio" name="" id="" [checked]="user.id == currentRecipientId">
         {{user.username}}
     </button>
 }

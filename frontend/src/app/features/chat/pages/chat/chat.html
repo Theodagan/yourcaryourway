@@ -10,6 +10,7 @@
 				<span class="status-pill" [class.connected]="connectionStatus()">
 					{{ connectionStatus() ? 'Connected' : 'Disconnected' }}
 				</span>
+				<button type="button" class="secondary"><a [routerLink]="['/home']">Go to homepage</a></button>
 				<button type="button" class="secondary" (click)="logout()">Logout</button>
 			</div>
 		</header>
@@ -54,4 +55,7 @@
 			<p class="error">{{ errorMessage }}</p>
 		}
 	</section>  
+}
+@else{
+	<a [routerLink]="['/home']">Home</a>
 }
