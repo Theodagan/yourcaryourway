@@ -100,7 +100,11 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   handleRecipient(recipientId: number){
-    console.log(recipientId);
-    this.startConversation(recipientId);
+    if(recipientId == 0){
+      this.activeParticipantId = 0;
+    }
+    else{
+      this.startConversation(recipientId);
+    }
   }
 }

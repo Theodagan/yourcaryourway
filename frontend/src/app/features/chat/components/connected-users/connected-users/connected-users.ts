@@ -23,6 +23,10 @@ export class ConnectedUsers {
     }
 
     select(id:number){
+        if(id == this.currentRecipientId){
+            this.recipient.emit(0);
+            this.currentRecipientId = 0;
+        }
         this.recipient.emit(id);
         this.currentRecipientId = id;
     }

@@ -77,15 +77,16 @@ export class ChatSocketService implements OnDestroy {
     );
 
     this.usersSub = this.client.subscribe('/user/queue/connected-users', msg => {
-      console.log(msg.body);
-      this.connectedUsersSubject.next(JSON.parse(msg.body));
+      console.info('Connected users : ',msg.body);
+      let body = JSON.parse(msg.body) as { id: number; username: string }[];
+      let filteredUsers = body.filter(user => user.id !== this.currentUserId);
+      this.connectedUsersSubject.next(filteredUsers);
 	  });
 
     this.presenceSub = this.client.subscribe('/topic/presence', msg => {
-      console.log(msg.body, this.currentUserId);
+      console.info('Connected users : ',msg.body);
       let body = JSON.parse(msg.body) as { id: number; username: string }[];
       let filteredUsers = body.filter(user => user.id !== this.currentUserId);
-      // console.log("test", body.filter(user => user.id !== this.currentUserId));
       this.connectedUsersSubject.next(filteredUsers);
     });
   }
